@@ -10,7 +10,7 @@ function [R, C] = RCLadder2Theta(sys)
 %       R: vector of resistances.
 %       C: vector of capacitances.
 %
-%   See also: RCLADDERN.M, TRIDIAGCROUT.M
+%   See also: RCLADDERN.M, TRIDIAGCROUT.M, RCReconstruction_ABCD_LU.mw
 %
 %   $Author: BH$    $Date: 2023-06-21$  $Revision: 0$
 

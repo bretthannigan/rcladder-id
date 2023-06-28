@@ -7,10 +7,10 @@ function [L, U] = tridiagcrout(A)
 %       L: (n x n) lower trianguar matrix.
 %       U: (n x n) unit upper triangular matrix.
 %
-%   See also: http://www2.lawrence.edu/fast/GREGGJ/Math420/Section_6_6.pdf
+%   See also: http://www2.lawrence.edu/fast/GREGGJ/MATH420/Chapt6/Section_6_6.pdf
 %             https://www.webpages.uidaho.edu/~barannyk/Teaching/LU_factorization_tridiagonal.pdf
 
-    if ~(all(all(abs(triu(A, 2))<10*eps)) && all(all(abs(tril(A, -2))<10*eps)))
+    if ~(all(all(abs(triu(A, 2))<0.01*norm(A))) && all(all(abs(tril(A, -2))<0.01*norm(A))))
         warning('Matrix A must be tridiagonal. Assuming zero entries outside the -1, 0, 1 diagonals.');
     end
 

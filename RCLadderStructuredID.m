@@ -17,7 +17,7 @@ function [sys_id, T] = RCLadderStructuredID(sys, Cn)
 
     %% Tridiagonalize A Matrix
     n = size(sys.A, 1);
-    scaling_factor = 0.6e7;
+    scaling_factor = 0.6e6;
     %scaling_factor = 1e7;
     %scaling_factor = norm(sys.A)*0.02;
     %scaling_factor = 1;
