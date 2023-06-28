@@ -1,6 +1,6 @@
 %TRIDIAGSYMMETRIZE Compute the similarity transformation to symmetrize a 
 %tridiagonal matrix.
-%   Following along from Slide 3-4 of "Tridiagonal Matrices" by Gérard 
+%   Following along from Slide 3-4 of "Tridiagonal Matrices" by Gerard 
 %   Meurant (2008) [1]. Assumes that the upper codiagonal coefficients 
 %   omega_j are nonzero and that all products omega_j*beta_j are positive, 
 %   where omega is the lower codiagonal.

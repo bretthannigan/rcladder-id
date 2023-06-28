@@ -22,7 +22,7 @@ function [sys_id, T] = RCLadderHwang(sys)
 
     n = size(sys.B, 1);
     [sys_hwang, T_hwang] = ss2caueri(sys);
-    T_flip = fliplr(diag([sys_hwang.D/sys_hwang.C(1); ones(n-1, 1)]));
+    T_flip = fliplr(diag([-sys_hwang.D/sys_hwang.C(1); ones(n-1, 1)]));
     sys_id_unscaled = ss(T_flip\sys_hwang.A*T_flip, T_flip\sys_hwang.B, sys_hwang.C*T_flip, sys_hwang.D);
     [A_scaled, T_id] = RCLadderDiagonalScaling(sys_id_unscaled.A, sys_id_unscaled.B);
     sys_id = ss(A_scaled, sys_id_unscaled.B, sys_id_unscaled.C, sys_id_unscaled.D);

@@ -17,17 +17,27 @@ function [sys_id, T] = RCLadderStructuredID(sys, Cn)
 
     %% Tridiagonalize A Matrix
     n = size(sys.A, 1);
-    [A_tri, Q, Pt, Omega] = tridiagparlett(sys.A, (1/sys.D*Cn).*sys.B, ((-1/sys.D).*sys.C)');
+    scaling_factor = 0.6e7;
+    %scaling_factor = 1e7;
+    %scaling_factor = norm(sys.A)*0.02;
+    %scaling_factor = 1;
+    %scaling_factor = ((1/sys.D*Cn).*sys.B)'*(((-1/sys.D).*sys.C)');
+    [A_tri, Q, Pt, Omega] = tridiagparlett((1/scaling_factor)*sys.A, (1/scaling_factor)*(1/sys.D*Cn).*sys.B, (1/scaling_factor)*((-1/sys.D).*sys.C)');
+    %[A_tri, Q, Pt, Omega] = tridiagparlett(sys.A, (1/sys.D*Cn).*sys.B, ((-1/sys.D).*sys.C)');
     %[A_tri, Q, Qinv, Omega] = tridiagparlett(sys.A, sys.B, sys.C');
     Tflip = fliplr(eye(n));
-    A_rec = Tflip*(Omega\A_tri)*Tflip;
+    %A_rec = Tflip*(Omega\A_tri)*Tflip;
+    invOmega = diag(1./diag(Omega)); % Fix because inverse of diagonal matrix Omega is numerically unstable.
+    A_rec = Tflip*invOmega*A_tri*Tflip;
 
     %% Restore Diagonal Scaling
     B_out = Tflip*Pt*sys.B;
     %C_out = sys.C*Q*Tflip;
-    C_out = sys.C*Q/Omega*Tflip;
+    C_out = sys.C*Q*invOmega*Tflip;
     [A_out, T_scaling] = RCLadderDiagonalScaling(A_rec, B_out);
-    sys_id = ss(A_out, B_out, C_out, sys.D);
+    sys_id = ss(A_out*scaling_factor, B_out*scaling_factor, (1/scaling_factor)*C_out, sys.D);
+%     T = Q*Tflip*T_scaling*(1/scaling_factor);
+%    sys_id = ss(A_out, B_out, C_out, sys.D);
     T = Q*Tflip*T_scaling;
 
 %     function [A_scaled, T] = diagonal_scaling(A_unscaled, B)

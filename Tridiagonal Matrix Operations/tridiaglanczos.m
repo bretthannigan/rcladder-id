@@ -52,7 +52,7 @@ function [T, Q, Qinv] = tridiaglanczos(A, varargin)
     if isrow(q1)
         q1 = q1';
     end
-    if (abs(p1'*q1)<1e-6)
+    if (abs(p1'*q1)<10*eps)
         error('The inner product p1''*q1 must not equal zero.')
     end
     beta_in = p.Results.beta;
