@@ -36,7 +36,7 @@ n_freq = 128; % Number of test points for frequency domain identification.
 w_test = 2*pi*logspace(log10(freq_range(1)), log10(freq_range(2)), n_freq);
 
 % Monte Carlo options:
-order = 4:20;
+order = 3:20;
 n_trials = 100;
 rng(1, 'twister') % Seed RNG for reproducibility.
 s = struct('order', num2cell(repelem(order', n_trials))); % Results structure.
@@ -92,14 +92,23 @@ for i_n=1:length(order)
         % The procedure from [2] generates the structured state-space
         % matrices from the Routh array coefficients and Markov parameters
         % of a Cauer type I system.
-        tic
-        [sys_hwang, ~] = RCLadderHwang(s(index).sys_t);
-        s(index).duration_hwang = toc;
-        s(index).sys_hwang = sys_hwang;
-        s(index).A_hwang_dist = MatrixDistance(s(index).sys_true.A, s(index).sys_hwang.A);
-        s(index).B_hwang_dist = MatrixDistance(s(index).sys_true.B, s(index).sys_hwang.B);
-        s(index).C_hwang_dist = MatrixDistance(s(index).sys_true.C, s(index).sys_hwang.C);
-        s(index).D_hwang_dist = MatrixDistance(s(index).sys_true.D, s(index).sys_hwang.D);
+        try
+            tic
+            [sys_hwang, ~] = RCLadderHwang(s(index).sys_t);
+            s(index).duration_hwang = toc;
+            s(index).sys_hwang = sys_hwang;
+            s(index).A_hwang_dist = MatrixDistance(s(index).sys_true.A, s(index).sys_hwang.A);
+            s(index).B_hwang_dist = MatrixDistance(s(index).sys_true.B, s(index).sys_hwang.B);
+            s(index).C_hwang_dist = MatrixDistance(s(index).sys_true.C, s(index).sys_hwang.C);
+            s(index).D_hwang_dist = MatrixDistance(s(index).sys_true.D, s(index).sys_hwang.D);
+        catch
+            s(index).duration_hwang = nan;
+            s(index).sys_hwang = [];
+            s(index).A_hwang_dist = nan;
+            s(index).B_hwang_dist = nan;
+            s(index).C_hwang_dist = nan;
+            s(index).D_hwang_dist = nan;
+        end
 
         %% Collect Frequency-Domain Data
         % Exact frequency response data (no added noise).
@@ -115,11 +124,14 @@ for i_n=1:length(order)
         initial_sys.Structure.Parameters.Minimum = [repmat(RANGE_R(1), n, 1); repmat(RANGE_C(1), n, 1)];
         initial_sys.Structure.Parameters.Maximum = [repmat(RANGE_R(2), n, 1); repmat(RANGE_C(2), n, 1)];
         opt = greyestOptions('SearchMethod', 'auto', 'Focus', 'simulation');
-        opt.SearchOptions.Tolerance = 1e-8; % Seems to improve estimation slightly.
+        %opt.SearchOptions.Tolerance = 0.01;
+        opt.SearchOptions.MaxIterations = 50;
         tic
         s(index).sys_idgrey = greyest(freq_id, initial_sys, opt);
         s(index).duration_idgrey = toc;
+        s(index).sys_idgrey.Report.Termination
         s(index).theta_idgrey = getpvec(s(index).sys_idgrey).*[repmat(SCALING_R, n, 1); repmat(SCALING_C, n, 1)];
+        fprintf('\nIDGREY: %i / %i correct', sum((abs(s(index).theta_idgrey-[s(index).R_true; s(index).C_true]))./[s(index).R_true; s(index).C_true]<0.01), 2*n)
         
         %% System Identification using N4SID and Structured Identification Algorithm
         tic
@@ -133,12 +145,12 @@ for i_n=1:length(order)
             toc;
             s(index).sys_n4sid_est = [];
             s(index).duration_n4sid_est = nan;
-            s(index).theta_n4sid_est = [];
+            s(index).theta_n4sid_est = nan*ones(2*n, 1);
         end
     end
 end
 save(['IDMonteCarlo_Results_' datestr(now(), 30)], 's', '-v7.3')
-fprintf('\n Finished.')
+fprintf('\n Finished\n.')
 
 function distance = MatrixDistance(A, B)
     distance = norm(B - A)/norm(A);

@@ -16,6 +16,6 @@ function [R, C] = RCLadder2Theta(sys)
 
     ABCD = [sys.A, sys.B; sys.C, sys.D];
     [U, L] = tridiagcrout(ABCD');
-    C = -cumprod(flipud(diag(L', -1))).*cumprod(-ones(length(sys.A), 1));
-    R = 1./(diag(U, -1).*flipud(C));
+    C = -flipud(cumprod(flipud(diag(L', -1))).*cumprod(-ones(length(sys.A), 1)));
+    R = 1./(diag(U, -1).*(C));
 end
