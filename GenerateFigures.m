@@ -35,7 +35,7 @@ ax(1) = subplot(2, 2, 1);
 set(ax(1), 'pos', [0.07 0.57 0.4 0.4]);
 plot(unique_order, sum(max_est_dist<0.01)/size(A_est_dist, 1), 'o-k', 'LineWidth',  1, 'MarkerFaceColor', 'white', 'DisplayName', 'This work')
 hold on
-plot(unique_order, sum(max_hwang_dist<0.01)/size(A_hwang_dist, 1), 'o-', 'Color', [0.4 0.4 0.4], 'LineWidth',  1, 'MarkerFaceColor', 'white', 'DisplayName', 'Ref. [9]')
+plot(unique_order, sum(max_hwang_dist<0.01)/size(A_hwang_dist, 1), 'o-', 'Color', [0.4 0.4 0.4], 'LineWidth',  1, 'MarkerFaceColor', 'white', 'DisplayName', 'Ref. [12]')
 xlabel('System order')
 ylabel('Fraction correctly reconstucted')
 legend('Location', 'SouthWest')
@@ -83,7 +83,7 @@ ax(3) = subplot(2, 2, 3);
 set(ax(3), 'pos', [0.07 0.08 0.4 0.4]);
 plot(unique_order, duration_est, '-ok',  'LineWidth', 1, 'MarkerFaceColor', 'white', 'DisplayName', 'this work')
 hold on
-plot(unique_order, duration_hwang, '-o', 'Color', [0.4 0.4 0.4], 'LineWidth',  1, 'MarkerFaceColor', 'white', 'DisplayName', 'Ref. [9]')
+plot(unique_order, duration_hwang, '-o', 'Color', [0.4 0.4 0.4], 'LineWidth',  1, 'MarkerFaceColor', 'white', 'DisplayName', 'Ref. [12]')
 xlabel('System order')
 ylabel('Computation time (s)')
 legend('Location', 'NorthWest')
