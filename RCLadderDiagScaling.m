@@ -1,4 +1,4 @@
-function [A_scaled, T] = RCLadderDiagonalScaling(A_unscaled, B)
+function [A_scaled, T] = RCLadderDiagScaling(A_unscaled, B)
 %RCLADDERDIAGSCALING Find Diagonal Scaling to Reconstruct Tridiagonal A
 % Matrix.
 %   Provided tridiagonal matrix A_unscaled with ones on the k=1 diagonal:

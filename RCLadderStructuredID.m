@@ -11,7 +11,7 @@ function [sys_id, T] = RCLadderStructuredID(sys, Cn)
 %       T_id: similarity transformation such that 
 %             sys_id.A = T_id\sys.A*T_id
 %
-%   See also: RCLADDERN.M, RCLADDERDIAGONALSCALING.M
+%   See also: RCLADDERN.M, RCLADDERDIAGSCALING.M
 %
 %   $Author: BH$    $Date: 2023-06-13$  $Revision: 0$
 
@@ -26,7 +26,7 @@ function [sys_id, T] = RCLadderStructuredID(sys, Cn)
     %% Restore Diagonal Scaling
     B_out = Tflip*Pt*sys.B;
     C_out = sys.C*Q*invOmega*Tflip;
-    [A_out, T_scaling] = RCLadderDiagonalScaling(A_rec, B_out);
+    [A_out, T_scaling] = RCLadderDiagScaling(A_rec, B_out);
     sys_id = ss(A_out*scaling_factor, B_out*scaling_factor, (1/scaling_factor)*C_out, sys.D);
     T = Q*Tflip*T_scaling;
 end
