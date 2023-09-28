@@ -1,4 +1,4 @@
-function sys = RCLadderN(R, C, varargin)
+function varargout = RCLadderN(R, C, varargin)
 % RCLADDERN Generate model of the admittance state-space model of an 
 %   N-section RC ladder (with R_1 in last position).
 %
@@ -20,48 +20,67 @@ function sys = RCLadderN(R, C, varargin)
 %                  descending (false; measurement across net N) order.
 %
 %   Outputs:
-%       sys: state-space model for the RC ladder system, where sys.A is in
-%            tridiagonal form, sys.B and sys.C have one nonzero element.
+%       If 1 output:
+%           sys: state-space model for the RC ladder system, where sys.A is 
+%                in tridiagonal form, sys.B and sys.C have one nonzero 
+%                element.
+%       If 4 outputs:
+%           A: state-space A matrix.
+%           B: state-space B matrix.
+%           C: state-space C matrix.
+%           D: state-space D matrix.
 %           
 %   See also:
 %
-%   $Author: BH$    $Date: 2022-04-10$  $Revision: 0$
+%   $Author: BH$    $Date: 2022-04-10$  $Revision: 2$
 %
 %   REVISION 1: 2023-05-17
 %       Added name-value parameter to produce models in ascending or
 %       descending order.
+%
+%   REVISION 2: 2023-09-28
+%       Allow output of lit object or individual A, B, C, D matrices (to
+%       enable compatibility with SDPVAR objects).
 
-p = inputParser;
-addParameter(p, 'ascending', false, @islogical);
-parse(p, varargin{:});
+    p = inputParser;
+    addParameter(p, 'ascending', false, @islogical);
+    parse(p, varargin{:});
 
-N = length(C);
-A = zeros(N);
+    N = length(C);
+    A = zeros(N);
 
-if ~iscolumn(R)
-    R = R';
-end
+    if ~iscolumn(R)
+        R = R';
+    end
 
-if p.Results.ascending
-    A = diag(1./C)*(diag(-1./R) + diag([-1./R(2:end); 0]) + diag(1./R(2:end), 1) + diag(1./R(2:end), -1));
-    B = [1/(R(1)*C(1)); zeros(N-1, 1)];
-    C = [-1/R(1) zeros(1, N-1)];
-    D = 1/R(1);
-else
-    % Old method
-%     Crow_inv = diag(1./C);
-%     Rtri = tril(repmat(R, 1, N));
-%     N_inv = -eye(N) + diag(ones(N-1, 1), 1);
-% 
-%     A = Crow_inv/Rtri*N_inv;
-%     B = [zeros(N-1, 1); 1/(R(end)*C(end))];
-%     C = [zeros(1, N-1) -1/R(end)];
-%     D = 1/R(end);
-    A = diag(1./C)*(diag(-1./R) + diag([0; -1./R(1:end-1)]) + diag(1./R(1:end-1), 1) + diag(1./R(1:end-1), -1));
-    B = [zeros(N-1, 1); 1/(R(end)*C(end))];
-    C = [zeros(1, N-1) -1/R(end)];
-    D = 1/R(end);
-end
-sys = ss(A, B, C, D);
+    if p.Results.ascending
+        A = diag(1./C)*(diag(-1./R) + diag([-1./R(2:end); 0]) + diag(1./R(2:end), 1) + diag(1./R(2:end), -1));
+        B = [1/(R(1)*C(1)); zeros(N-1, 1)];
+        C = [-1/R(1) zeros(1, N-1)];
+        D = 1/R(1);
+    else
+    %    % Old method
+    %     Crow_inv = diag(1./C);
+    %     Rtri = tril(repmat(R, 1, N));
+    %     N_inv = -eye(N) + diag(ones(N-1, 1), 1);
+    % 
+    %     A = Crow_inv/Rtri*N_inv;
+    %     B = [zeros(N-1, 1); 1/(R(end)*C(end))];
+    %     C = [zeros(1, N-1) -1/R(end)];
+    %     D = 1/R(end);
+        A = diag(1./C)*(diag(-1./R) + diag([0; -1./R(1:end-1)]) + diag(1./R(1:end-1), 1) + diag(1./R(1:end-1), -1));
+        B = [zeros(N-1, 1); 1/(R(end)*C(end))];
+        C = [zeros(1, N-1) -1/R(end)];
+        D = 1/R(end);
+    end
+
+    if nargout==1
+        varargout{1} = ss(A, B, C, D);
+    else
+        varargout{1} = A;
+        varargout{2} = B;
+        varargout{3} = C;
+        varargout{4} = D;
+    end
 
 end

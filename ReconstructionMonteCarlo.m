@@ -53,6 +53,10 @@ for i_n=1:length(order)
 %         s(index).sys_idgrey = sys_idgrey;
 %         s(index).R_idgrey = theta_idgrey(1:n);
 %         s(index).C_idgrey = theta_idgrey(n+1:end);
+
+        %% Run Yu2018 Algorithm
+        tic
+        [sys_yu]
     end
 end
 % %sum(sum(error(:,2:end), 2)>0.1)/size(error, 1)
@@ -76,3 +80,5 @@ function [A, B, C, D] = RCLadderIDGrey(theta, Ts)
     C = sys.C;
     D = sys.D;
 end
+
+function 

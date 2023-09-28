@@ -30,19 +30,31 @@ function [sys_est, theta_est] = Yu2018(sys, A_theta, B_theta, C_theta, n_theta, 
 %       v: (Optional, default: order of sys) number of impulse response
 %          samples forming the rows of the Hankel matrix (equivalently the
 %          number of rows in the extended observability matrix).
-%       verbose: (Optional, default: 0) Write to console the
-%                optimization progress.
+%       verbose: (Optional, default: 1) Write to console the
+%                optimization progress. 
+%                   0: none, 
+%                   1: iteration progress, 
+%                   2: iteration progress and YALMIP output.
 %
 %   Outputs:
 %       sys_est: Estimated strucutred system.
 %       theta_est: Vector of estimated parameters. 
+%
+%   Requirements: 
+%       MATLAB Control Systems Toolbox, YALMIP [2], and a supported solver, 
+%       such as Mosek (https://www.mosek.com/).
 %           
 %   See also:
 %       [1] Yu, C., Ljung, L., & Verhaegen, M. (2018). Identification of 
 %           structured state-space models. Automatica, 90, 54–61. 
 %           https://doi.org/10.1016/j.automatica.2017.12.023
+%       [2] Löfberg, J. (2004). YALMIP: A Toolbox for Modeling and 
+%           Optimization in MATLAB. In In Proceedings of the CACSD 
+%           Conference. https://yalmip.github.io/
 %
 %   $Author: BH$    $Date: 2023-09-27$  $Revision: 0$
+%
+%   ©2023 ETH Zurich, Brett Hannigan; D-HEST; Biomedical and Mobile Health Technology (BMHT) Lab; Carlo Menon
 
     n = size(sys.A, 1);
 
@@ -51,9 +63,9 @@ function [sys_est, theta_est] = Yu2018(sys, A_theta, B_theta, C_theta, n_theta, 
     addParameter(p, 'rel_tol', 1e-6, @(x) isnumeric(x) && isscalar(x));
     addParameter(p, 'lambda', 1e-3, @(x) isnumeric(x) && isscalar(x));
     addParameter(p, 'max_iter', 100, @(x) isnumeric(x) && isscalar(x));
-    addParameter(p, 'h', n, @(x) isinteger(x) && isscalar(x));
-    addParameter(p, 'v', n, @(x) isinteger(x) && isscalar(x));
-    addParameter(p, 'verbose', 1, @(x) islogical(x) && isscalar(x));
+    addParameter(p, 'h', n, @(x) isnumeric(x) && isscalar(x));
+    addParameter(p, 'v', n, @(x) isnumeric(x) && isscalar(x));
+    addParameter(p, 'verbose', 1, @(x) isnumeric(x) && isscalar(x));
     parse(p, varargin{:});
     
     v = p.Results.v;
@@ -113,6 +125,9 @@ function [sys_est, theta_est] = Yu2018(sys, A_theta, B_theta, C_theta, n_theta, 
     if p.Results.verbose
         fprintf(print_progress(i_iter, p.Results.max_iter, rel_change(value(theta), theta_prev), p.Results.rel_tol, value(theta), mod(i_iter-1, 10)==0, true, true));
     end
+    if i_iter>=p.Results.max_iter
+        warning(sprintf('Convergence not reached after %i iterations.', i_iter-1))
+    end
     theta_est = value(theta);
     sys_est = ss(A_theta(theta_est), B_theta(theta_est), C_theta(theta_est), [], sys.Ts);
     
@@ -152,7 +167,7 @@ function [sys_est, theta_est] = Yu2018(sys, A_theta, B_theta, C_theta, n_theta, 
         V = V(:,1:n);
     end
     function str = print_progress(iter, max_iter, rel_change, rel_tol, theta, is_header, is_data, is_footer)
-        str_theta = num2str(theta', '% 10.3e ');
+        str_theta = num2str(theta', '% 11.3e ');
         str_data = sprintf('\n| %5i | %8i |  %9.3e | %9.3e | %s |', iter, max_iter, rel_change, rel_tol, str_theta);
         str_horzline = repmat('-', 1, length(str_data)-1);
         str = '';

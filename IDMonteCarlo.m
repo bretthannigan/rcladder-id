@@ -9,6 +9,9 @@
 %           state-space model to Cauer I and II CFE canonical forms. 
 %           International Journal of Systems Science, 15(7), 797–804. 
 %           https://doi.org/10.1080/00207728408926600
+%       [1] Yu, C., Ljung, L., & Verhaegen, M. (2018). Identification of 
+%           structured state-space models. Automatica, 90, 54–61. 
+%           https://doi.org/10.1016/j.automatica.2017.12.023
 %
 %   $Author: BH$    $Date: 2023-06-13$  $Revision: 1$
 %
@@ -26,6 +29,9 @@ RANGE_R = [1 10];
 RANGE_C = [1 10];
 SCALING_R = 1e4; % x10 kOhm
 SCALING_C = 1e-11; % pF
+IS_RUN_HWANG = true; % Run the algorithm from [2].
+IS_RUN_YU = true; % Run the algorithm from [3].
+IS_RUN_IDGREY = true; % Run the built-in MATLAB IDGREY function.
 
 % Options for Section XXX
 IS_PRESCALE = true; % Use MATLAB PRESCALE() function on randomly transformed systems.
@@ -37,7 +43,7 @@ w_test = 2*pi*logspace(log10(freq_range(1)), log10(freq_range(2)), n_freq);
 
 % Monte Carlo options:
 order = 3:20;
-n_trials = 100;
+n_trials = 10;
 rng(1, 'twister') % Seed RNG for reproducibility.
 s = struct('order', num2cell(repelem(order', n_trials))); % Results structure.
 
@@ -92,60 +98,91 @@ for i_n=1:length(order)
         % The procedure from [2] generates the structured state-space
         % matrices from the Routh array coefficients and Markov parameters
         % of a Cauer type I system.
-        try
-            tic
-            [sys_hwang, ~] = RCLadderHwang(s(index).sys_t);
-            s(index).duration_hwang = toc;
-            s(index).sys_hwang = sys_hwang;
-            s(index).A_hwang_dist = MatrixDistance(s(index).sys_true.A, s(index).sys_hwang.A);
-            s(index).B_hwang_dist = MatrixDistance(s(index).sys_true.B, s(index).sys_hwang.B);
-            s(index).C_hwang_dist = MatrixDistance(s(index).sys_true.C, s(index).sys_hwang.C);
-            s(index).D_hwang_dist = MatrixDistance(s(index).sys_true.D, s(index).sys_hwang.D);
-        catch
-            s(index).duration_hwang = nan;
-            s(index).sys_hwang = [];
-            s(index).A_hwang_dist = nan;
-            s(index).B_hwang_dist = nan;
-            s(index).C_hwang_dist = nan;
-            s(index).D_hwang_dist = nan;
+        if IS_RUN_HWANG
+            try
+                tic
+                [sys_hwang, ~] = RCLadderHwang(s(index).sys_t);
+                s(index).duration_hwang = toc;
+                s(index).sys_hwang = sys_hwang;
+                s(index).A_hwang_dist = MatrixDistance(s(index).sys_true.A, s(index).sys_hwang.A);
+                s(index).B_hwang_dist = MatrixDistance(s(index).sys_true.B, s(index).sys_hwang.B);
+                s(index).C_hwang_dist = MatrixDistance(s(index).sys_true.C, s(index).sys_hwang.C);
+                s(index).D_hwang_dist = MatrixDistance(s(index).sys_true.D, s(index).sys_hwang.D);
+            catch
+                s(index).duration_hwang = nan;
+                s(index).sys_hwang = [];
+                s(index).A_hwang_dist = nan;
+                s(index).B_hwang_dist = nan;
+                s(index).C_hwang_dist = nan;
+                s(index).D_hwang_dist = nan;
+            end
+        end
+        
+        %% Run Rank-Constrained Difference-of-Convex Programming
+        % Run the algorithm from [3] to identify a parameterized
+        % state-space model using the rank constraint fomulated as a
+        % difference of convex programming optimization problem.
+        if IS_RUN_YU
+           try
+                tic
+                [sys_yu, theta_yu] = RCLadderYu(s(index).R_true, s(index).C_true, s(index).T, IS_PRESCALE);
+                s(index).duration_yu = toc;
+                s(index).sys_yu = sys_yu;
+                s(index).A_yu_dist = MatrixDistance(s(index).sys_true.A, s(index).sys_yu.A);
+                s(index).B_yu_dist = MatrixDistance(s(index).sys_true.B, s(index).sys_yu.B);
+                s(index).C_yu_dist = MatrixDistance(s(index).sys_true.C, s(index).sys_yu.C);
+                s(index).D_yu_dist = MatrixDistance(s(index).sys_true.D, s(index).sys_yu.D);
+                s(index).theta_yu = theta_yu;
+                fprintf('\nYU2018: %i / %i correct', sum((abs(s(index).theta_yu-[s(index).R_true; s(index).C_true]))./[s(index).R_true; s(index).C_true]<0.01), 2*n)
+            catch
+                s(index).duration_yu = nan;
+                s(index).sys_yu = [];
+                s(index).A_yu_dist = nan;
+                s(index).B_yu_dist = nan;
+                s(index).C_yu_dist = nan;
+                s(index).D_yu_dist = nan;
+                s(index).theta_yu = nan*ones(2*n, 1);
+            end
         end
 
-        %% Collect Frequency-Domain Data
-        % Exact frequency response data (no added noise).
-        [mag, phase, ~] = bode(s(index).sys_true, w_test);
-        response = squeeze(mag).*exp(1i*deg2rad(squeeze(phase)));
-        % Create IDFRD object out of frequency response data.
-        freq_id = idfrd(response, w_test, 0);
-        
-        %% System Identification using IDGREY
-        % Generate random initial guess within the range of the parameters.
-        initial_theta = [RANGE_R(1) + rand(n, 1)*diff(RANGE_R); RANGE_C(1) + rand(n, 1)*diff(RANGE_C)];
-        initial_sys = idgrey(@RCLadderGreyBox, initial_theta, 'c', [SCALING_R SCALING_C]);
-        initial_sys.Structure.Parameters.Minimum = [repmat(RANGE_R(1), n, 1); repmat(RANGE_C(1), n, 1)];
-        initial_sys.Structure.Parameters.Maximum = [repmat(RANGE_R(2), n, 1); repmat(RANGE_C(2), n, 1)];
-        opt = greyestOptions('SearchMethod', 'auto', 'Focus', 'simulation');
-        %opt.SearchOptions.Tolerance = 0.01;
-        opt.SearchOptions.MaxIterations = 50;
-        tic
-        s(index).sys_idgrey = greyest(freq_id, initial_sys, opt);
-        s(index).duration_idgrey = toc;
-        s(index).sys_idgrey.Report.Termination
-        s(index).theta_idgrey = getpvec(s(index).sys_idgrey).*[repmat(SCALING_R, n, 1); repmat(SCALING_C, n, 1)];
-        fprintf('\nIDGREY: %i / %i correct', sum((abs(s(index).theta_idgrey-[s(index).R_true; s(index).C_true]))./[s(index).R_true; s(index).C_true]<0.01), 2*n)
-        
-        %% System Identification using N4SID and Structured Identification Algorithm
-        tic
-        s(index).sys_n4sid = n4sid(freq_id, n, 'FeedThrough', true);
-        try
-            s(index).sys_n4sid_est = RCLadderStructuredID(sys_est, 1);
-            s(index).duration_n4sid_est = toc;
-            [theta_R, theta_C] = RCLadder2Theta(s(index).sys_n4sid_est);
-            s(index).theta_n4sid_est = [theta_R; theta_C];
-        catch
-            toc;
-            s(index).sys_n4sid_est = [];
-            s(index).duration_n4sid_est = nan;
-            s(index).theta_n4sid_est = nan*ones(2*n, 1);
+        if IS_RUN_IDGREY
+            %% Collect Frequency-Domain Data
+            % Exact frequency response data (no added noise).
+            [mag, phase, ~] = bode(s(index).sys_true, w_test);
+            response = squeeze(mag).*exp(1i*deg2rad(squeeze(phase)));
+            % Create IDFRD object out of frequency response data.
+            freq_id = idfrd(response, w_test, 0);
+
+            %% System Identification using IDGREY
+            % Generate random initial guess within the range of the parameters.
+            initial_theta = [RANGE_R(1) + rand(n, 1)*diff(RANGE_R); RANGE_C(1) + rand(n, 1)*diff(RANGE_C)];
+            initial_sys = idgrey(@RCLadderGreyBox, initial_theta, 'c', [SCALING_R SCALING_C]);
+            initial_sys.Structure.Parameters.Minimum = [repmat(RANGE_R(1), n, 1); repmat(RANGE_C(1), n, 1)];
+            initial_sys.Structure.Parameters.Maximum = [repmat(RANGE_R(2), n, 1); repmat(RANGE_C(2), n, 1)];
+            opt = greyestOptions('SearchMethod', 'auto', 'Focus', 'simulation');
+            %opt.SearchOptions.Tolerance = 0.01;
+            opt.SearchOptions.MaxIterations = 50;
+            tic
+            s(index).sys_idgrey = greyest(freq_id, initial_sys, opt);
+            s(index).duration_idgrey = toc;
+            s(index).sys_idgrey.Report.Termination;
+            s(index).theta_idgrey = getpvec(s(index).sys_idgrey).*[repmat(SCALING_R, n, 1); repmat(SCALING_C, n, 1)];
+            fprintf('\nIDGREY: %i / %i correct', sum((abs(s(index).theta_idgrey-[s(index).R_true; s(index).C_true]))./[s(index).R_true; s(index).C_true]<0.01), 2*n)
+
+            %% System Identification using N4SID and Structured Identification Algorithm
+            tic
+            s(index).sys_n4sid = n4sid(freq_id, n, 'FeedThrough', true);
+            try
+                s(index).sys_n4sid_est = RCLadderStructuredID(sys_est, 1);
+                s(index).duration_n4sid_est = toc;
+                [theta_R, theta_C] = RCLadder2Theta(s(index).sys_n4sid_est);
+                s(index).theta_n4sid_est = [theta_R; theta_C];
+            catch
+                toc;
+                s(index).sys_n4sid_est = [];
+                s(index).duration_n4sid_est = nan;
+                s(index).theta_n4sid_est = nan*ones(2*n, 1);
+            end
         end
     end
 end
