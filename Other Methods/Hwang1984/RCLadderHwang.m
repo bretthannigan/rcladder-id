@@ -19,6 +19,8 @@ function [sys_id, T] = RCLadderHwang(sys)
 %           https://doi.org/10.1080/00207728408926600
 %
 %   $Author: BH$    $Date: 2023-06-21$  $Revision: 0$ 
+%
+%   ©2023 ETH Zurich, Brett Hannigan; D-HEST; Biomedical and Mobile Health Technology (BMHT) Lab; Carlo Menon
 
     n = size(sys.B, 1);
     [sys_hwang, T_hwang] = ss2caueri(sys);

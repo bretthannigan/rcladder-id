@@ -19,6 +19,8 @@
 %       [2] Maple script "TridiagonalMatrixSymmetrization.mw"
 %
 %   $Author: BH$    $Date: 2023-05-01$  $Revision: 0$
+%
+%   ©2023 ETH Zurich, Brett Hannigan; D-HEST; Biomedical and Mobile Health Technology (BMHT) Lab; Carlo Menon
 
 function [Tsym, D] = tridiagsymmetrize(T)
 

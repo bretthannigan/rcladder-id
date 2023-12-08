@@ -21,6 +21,8 @@
 %       [2] TRIDIAGLANCZOS.M
 %
 %   $Author: BH$    $Date: 2023-04-27$  $Revision: 0$
+%
+%   ©2023 ETH Zurich, Brett Hannigan; D-HEST; Biomedical and Mobile Health Technology (BMHT) Lab; Carlo Menon
 
 function [A, S, Sinv] = tridiagsim(T)
     

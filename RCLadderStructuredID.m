@@ -14,6 +14,8 @@ function [sys_id, T] = RCLadderStructuredID(sys, Cn)
 %   See also: RCLADDERN.M, RCLADDERDIAGSCALING.M
 %
 %   $Author: BH$    $Date: 2023-06-13$  $Revision: 0$
+%
+%   ©2023 ETH Zurich, Brett Hannigan; D-HEST; Biomedical and Mobile Health Technology (BMHT) Lab; Carlo Menon
 
     %% Tridiagonalize A Matrix
     n = size(sys.A, 1);

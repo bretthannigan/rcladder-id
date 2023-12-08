@@ -13,6 +13,8 @@ function [R, C] = RCLadder2Theta(sys)
 %   See also: RCLADDERN.M, TRIDIAGCROUT.M, RCReconstruction_ABCD_LU.mw
 %
 %   $Author: BH$    $Date: 2023-06-21$  $Revision: 0$
+%
+%   ©2023 ETH Zurich, Brett Hannigan; D-HEST; Biomedical and Mobile Health Technology (BMHT) Lab; Carlo Menon
 
     ABCD = [sys.A, sys.B; sys.C, sys.D];
     [U, L] = tridiagcrout(ABCD');

@@ -1,23 +1,26 @@
 %IDMONTECARLO 
-%   Script to run the Monte Carlo simulations for Section XXX of [1]
+%   Script to run the Monte Carlo simulations for Section III of [1]
 %
 %   See also: RCLADDERN, RCLADDERSTRUCTUREDID, RCLADDERHWANG,
-%             RCLADDER2THETA
+%             RCLADDER2THETA, RCLADDERYU
 %       [1] Hannigan, B. C., Menon, C. (Draft). Fast, analytical method for 
 %           structured identification of SISO RC-ladder-type systems.
 %       [2] Hwang, C., Nakano, B., & Asahi, T. (1984). Transformation of 
 %           state-space model to Cauer I and II CFE canonical forms. 
 %           International Journal of Systems Science, 15(7), 797–804. 
 %           https://doi.org/10.1080/00207728408926600
-%       [1] Yu, C., Ljung, L., & Verhaegen, M. (2018). Identification of 
+%       [3] Yu, C., Ljung, L., & Verhaegen, M. (2018). Identification of 
 %           structured state-space models. Automatica, 90, 54–61. 
 %           https://doi.org/10.1016/j.automatica.2017.12.023
 %
-%   $Author: BH$    $Date: 2023-06-13$  $Revision: 1$
+%   $Author: BH$    $Date: 2023-06-13$  $Revision: 2$
 %
 %   REVISION 1: 2023-06-28
 %       Merged in code for simulation comparing the algorithm with IDGREY 
 %       when identifying an RC-ladder system from frequency-domain data.
+%
+%   REVISION 2: 2023-10-02
+%       Added the method from [3] to the comparison.
 %
 %   ©2023 ETH Zurich, Brett Hannigan; D-HEST; Biomedical and Mobile Health Technology (BMHT) Lab; Carlo Menon
 
@@ -31,19 +34,20 @@ SCALING_R = 1e4; % x10 kOhm
 SCALING_C = 1e-11; % pF
 IS_RUN_HWANG = true; % Run the algorithm from [2].
 IS_RUN_YU = true; % Run the algorithm from [3].
+YU_ORDER_LIMIT = 8;
 IS_RUN_IDGREY = true; % Run the built-in MATLAB IDGREY function.
 
-% Options for Section XXX
+% Options for Section III-A
 IS_PRESCALE = true; % Use MATLAB PRESCALE() function on randomly transformed systems.
 
-% Options for Section YYY
+% Options for Section III-B
 freq_range = [1e3 1e7];
 n_freq = 128; % Number of test points for frequency domain identification.
 w_test = 2*pi*logspace(log10(freq_range(1)), log10(freq_range(2)), n_freq);
 
 % Monte Carlo options:
-order = 3:20;
-n_trials = 10;
+order = 2:20;
+n_trials = 100;
 rng(1, 'twister') % Seed RNG for reproducibility.
 s = struct('order', num2cell(repelem(order', n_trials))); % Results structure.
 
@@ -122,7 +126,7 @@ for i_n=1:length(order)
         % Run the algorithm from [3] to identify a parameterized
         % state-space model using the rank constraint fomulated as a
         % difference of convex programming optimization problem.
-        if IS_RUN_YU
+        if (IS_RUN_YU && (order(i_n)<=YU_ORDER_LIMIT))
            try
                 tic
                 [sys_yu, theta_yu] = RCLadderYu(s(index).R_true, s(index).C_true, s(index).T, IS_PRESCALE);
@@ -177,6 +181,7 @@ for i_n=1:length(order)
                 s(index).duration_n4sid_est = toc;
                 [theta_R, theta_C] = RCLadder2Theta(s(index).sys_n4sid_est);
                 s(index).theta_n4sid_est = [theta_R; theta_C];
+                fprintf('\nThis work: %i / %i correct', sum((abs(s(index).theta_n4sid_est-[s(index).R_true; s(index).C_true]))./[s(index).R_true; s(index).C_true]<0.01), 2*n)
             catch
                 toc;
                 s(index).sys_n4sid_est = [];
@@ -186,7 +191,7 @@ for i_n=1:length(order)
         end
     end
 end
-save(['IDMonteCarlo_Results_' datestr(now(), 30)], 's', '-v7.3')
+save(['Data/IDMonteCarlo_Results_' datestr(now(), 30)], 's', '-v7.3')
 fprintf('\n Finished\n.')
 
 function distance = MatrixDistance(A, B)

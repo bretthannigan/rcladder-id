@@ -21,6 +21,8 @@
 %
 %   REVISION 1: 2023-05-15
 %       Added input parser to allow specified beta vector.
+%
+%   ©2023 ETH Zurich, Brett Hannigan; D-HEST; Biomedical and Mobile Health Technology (BMHT) Lab; Carlo Menon
 
 function [T, Q, Qinv] = tridiaglanczos(A, varargin)
     p = inputParser;

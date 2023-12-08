@@ -14,6 +14,8 @@ function unscaledsys = unscale(sys, info)
 %             [1] https://www.mathworks.com/help/control/ref/ss.prescale.html
 %
 %   $Author: BH$    $Date: 2023-06-23$  $Revision: 0$
+%
+%   ©2023 ETH Zurich, Brett Hannigan; D-HEST; Biomedical and Mobile Health Technology (BMHT) Lab; Carlo Menon
 
     if ~sys.scaled
         warning('provided sys is not prescaled, continuing anyways.')

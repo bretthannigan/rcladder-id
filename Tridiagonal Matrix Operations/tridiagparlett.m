@@ -30,6 +30,8 @@
 %           Applications, 13(2), 567–593.
 %
 %   $Author: BH$    $Date: 2023-05-18$  $Revision: 0$
+%
+%   ©2023 ETH Zurich, Brett Hannigan; D-HEST; Biomedical and Mobile Health Technology (BMHT) Lab; Carlo Menon
 
 function [T_hat, Q, Pt, Omega] = tridiagparlett(B, q1, p1)
         

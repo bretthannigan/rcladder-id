@@ -39,8 +39,10 @@ function varargout = RCLadderN(R, C, varargin)
 %       descending order.
 %
 %   REVISION 2: 2023-09-28
-%       Allow output of lit object or individual A, B, C, D matrices (to
+%       Allow output of LTI object or individual A, B, C, D matrices (to
 %       enable compatibility with SDPVAR objects).
+%
+%   ©2023 ETH Zurich, Brett Hannigan; D-HEST; Biomedical and Mobile Health Technology (BMHT) Lab; Carlo Menon
 
     p = inputParser;
     addParameter(p, 'ascending', false, @islogical);

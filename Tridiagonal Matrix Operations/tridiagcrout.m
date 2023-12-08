@@ -9,6 +9,8 @@ function [L, U] = tridiagcrout(A)
 %
 %   See also: http://www2.lawrence.edu/fast/GREGGJ/MATH420/Chapt6/Section_6_6.pdf
 %             https://www.webpages.uidaho.edu/~barannyk/Teaching/LU_factorization_tridiagonal.pdf
+%
+%   ©2023 ETH Zurich, Brett Hannigan; D-HEST; Biomedical and Mobile Health Technology (BMHT) Lab; Carlo Menon
 
     if ~(all(all(abs(triu(A, 2))<0.01*norm(A))) && all(all(abs(tril(A, -2))<0.01*norm(A))))
         warning('Matrix A must be tridiagonal. Assuming zero entries outside the -1, 0, 1 diagonals.');
